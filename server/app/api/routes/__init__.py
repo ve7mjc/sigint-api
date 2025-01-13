@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.routes import intercepts
+from server.api.routes import intercepts
 
 router = APIRouter()
 

@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 
-from app.schemas.common import Location, MinioObjectCreateBase
+from server.schemas.common import Location, MinioObjectCreateBase
 
 
 class InterceptAudioCreate(MinioObjectCreateBase):

@@ -1,16 +1,17 @@
 services:
   web:
+    container_name: sigint-api-server
     build: .
     ports:
       - "8000:8000"
     env_file:
       - ".env"
     volumes:
-      - ./app:/usr/src/app/app
+      - ./:/usr/src/app/server
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.intercept-api.rule=Host(`${HOSTNAME}.${DOMAIN}`)"
+      - "traefik.http.routers.intercept-api.rule=Host(${HOSTNAME?error}`.`${DOMAIN?error})"
       - "traefik.http.routers.intercept-api.entrypoints=websecure"
       - "traefik.http.routers.intercept-api.tls=true"
       - "traefik.http.routers.intercept-api.service=intercept-api"

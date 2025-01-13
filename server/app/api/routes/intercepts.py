@@ -1,4 +1,4 @@
-from app.services.minio_service import upload_to_minio
+from server.services.minio_service import upload_to_minio
 from app.core.config import settings
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
