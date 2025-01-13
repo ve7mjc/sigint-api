@@ -1,0 +1,29 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - ".env"
+    volumes:
+      - ./app:/usr/src/app/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.intercept-api.rule=Host(`${HOSTNAME}.${DOMAIN}`)"
+      - "traefik.http.routers.intercept-api.entrypoints=websecure"
+      - "traefik.http.routers.intercept-api.tls=true"
+      - "traefik.http.routers.intercept-api.service=intercept-api"
+      - "traefik.http.services.intercept-api.loadbalancer.server.port=8000"
+      - "traefik.http.routers.intercept-api.tls.certResolver=letsEncryptResolver"
+
+    restart: unless-stopped
+    networks:
+      - traefik_public
+      - database
+
+networks:
+  traefik_public:
+    external: true
+  database:
+    external: true
