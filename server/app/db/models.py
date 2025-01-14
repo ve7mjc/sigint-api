@@ -1,6 +1,8 @@
 from app.db.mixins import TimestampMixin
 
+from uuid import uuid4
 from sqlalchemy import Column, Float, Integer, String, DateTime, ForeignKey, func
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import relationship
 
@@ -12,15 +14,37 @@ Base = declarative_base(cls=TimestampMixin)
 
 class Node(Base):
     __tablename__ = "nodes"
-    id = Column(String, primary_key=True, index=True)  # eg ptmy-1
-    name = Column(String, nullable=False)
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+
+    name = Column(String, unique=True, nullable=False)
+
+    label = Column (String, nullable=True)
 
     intercepts = relationship('Intercept', back_populates='node')
 
 
+class Intercept(Base):
+    __tablename__ = "intercepts"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+
+    node_id = Column(UUID(as_uuid=True), ForeignKey('nodes.id'), nullable=False)
+    node = relationship('Node', back_populates='intercepts')
+
+    time_start = Column(DateTime(timezone=True), nullable=False)
+    duration = Column(Float, nullable=False)
+
+    frequency_center = Column(Float, nullable=False)
+
+    audio_file_id = Column(UUID(as_uuid=True), ForeignKey('intercept_audio_files.id'), nullable=True)
+    # relationship
+    audio_file = relationship('InterceptAudioFile', back_populates='intercept', uselist=True)
+
+
 class MinioFileRecordBase(Base):
     __abstract__ = True
-    id = Column(Integer, primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     etag = Column(String, nullable=False)
     bucket = Column(String, nullable=False)
     object_name = Column(String, nullable=False)
@@ -34,28 +58,10 @@ class AudioFileBase(MinioFileRecordBase):
 
 class InterceptAudioFile(AudioFileBase):
     __tablename__ = "intercept_audio_files"
-    id = Column(Integer, primary_key=True, index=True)
+
+    # intercept_id = Column(Integer, ForeignKey('intercepts.id'), nullable=False)
 
     intercept = relationship('Intercept', back_populates='audio_file')
-    intercept_id = Column(Integer, ForeignKey('intercepts.id'), nullable=False)
-
-
-class Intercept(Base):
-    __tablename__ = "intercepts"
-    id = Column(Integer, primary_key=True, index=True)
-
-    node_id = Column(String, ForeignKey('nodes.id'), nullable=False)
-    node = relationship('Node', back_populates='intercepts')
-
-    time_start = Column(DateTime(timezone=True), nullable=False)
-    duration = Column(Float, nullable=False)
-
-    frequency_center = Column(Float, nullable=False)
-
-    audio_file = relationship('InterceptAudioFile', back_populates='intercept')
-    audio_file_id = Column(Integer, ForeignKey('intercept_audio_files.id'), nullable=False)
-
-
 
 
 

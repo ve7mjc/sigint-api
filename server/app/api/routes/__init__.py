@@ -1,7 +1,7 @@
 from fastapi import APIRouter
-from server.api.routes import intercepts
+from app.api.routes import intercepts, nodes
 
 router = APIRouter()
 
 router.include_router(intercepts.router)
-
+router.include_router(nodes.router)

@@ -1,15 +1,47 @@
+import common
+
 from app.db.models import Base, Node
+
+from pathlib import Path
 
 import yaml
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
+yaml_path = Path(__file__).resolve().parent.parent.parent / "data"
 
 
 # Function to load YAML data
-def load_yaml(file_path):
-    with open(file_path, 'r') as f:
+def load_data(data_path: Path) -> dict:
+    with open(data_path, 'r') as f:
         return yaml.safe_load(f)
+
+
+def sync_nodes(nodes: dict, db: Session):
+    # nodes = yaml_data.get("nodes", {})
+    for node_name, node_fields in nodes.items():
+        # Check if the node exists in the database
+        db_node = db.query(Node).filter(Node.name == node_name).first()
+
+        if db_node:
+            # Update the node if fields don't match
+            updated = False
+            for field, value in node_fields.items():
+                if getattr(db_node, field) != value:
+                    setattr(db_node, field, value)
+                    updated = True
+            if updated:
+                print(f"Updating node '{node_name}' in the database.")
+        else:
+            # Insert a new node
+            print(f"Inserting new node '{node_name}' into the database.")
+            db_node = Node(name=node_name, **node_fields)
+            db.add(db_node)
+
+    db.commit()
+    print("Sync complete.")
+
+
 
 # Function to import data into the database
 def import_data(yaml_data, session):
@@ -40,13 +72,20 @@ if __name__ == '__main__':
     from app.core.config import settings
 
 
+    # load data from yaml file
+    if not yaml_path.exists():
+        raise(f"Data path '{yaml_path}' does not exist!")
+
+    # Load data from YAML
+    yaml_data = load_data(yaml_path / "data.yaml")
+
     engine = create_engine(settings.DATABASE_URL)
     Base.metadata.create_all(engine)
 
-    # Load data from YAML
-    yaml_file = 'data.yaml'  # Replace with the path to your YAML file
-    yaml_data = load_yaml(yaml_file)
-
     # Import data
     with Session(engine) as session:
-        import_data(yaml_data, session)
+        nodes = yaml_data.get('nodes', {})
+        print(nodes)
+        sync_nodes(nodes, session)
+
+        # import_data(yaml_data, session)

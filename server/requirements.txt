@@ -8,3 +8,5 @@ python-multipart
 alembic
 pyyaml
 
+geoalchemy2
+

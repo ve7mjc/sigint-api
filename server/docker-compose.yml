@@ -7,16 +7,18 @@ services:
     env_file:
       - ".env"
     volumes:
-      - ./:/usr/src/app/server
+      - ./:/usr/src/app
+      # some cheap trickery to bring the common module into scope
+      - ../common:/usr/src/app/common
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.intercept-api.rule=Host(${HOSTNAME?error}`.`${DOMAIN?error})"
-      - "traefik.http.routers.intercept-api.entrypoints=websecure"
-      - "traefik.http.routers.intercept-api.tls=true"
-      - "traefik.http.routers.intercept-api.service=intercept-api"
-      - "traefik.http.services.intercept-api.loadbalancer.server.port=8000"
-      - "traefik.http.routers.intercept-api.tls.certResolver=letsEncryptResolver"
+      - "traefik.http.routers.sigint-api.tls=true"
+      - "traefik.http.routers.sigint-api.rule=Host(`${FQDN}`)"
+      - "traefik.http.routers.sigint-api.entrypoints=websecure"
+      - "traefik.http.routers.sigint-api.service=sigint-api"
+      - "traefik.http.services.sigint-api.loadbalancer.server.port=8000"
+      - "traefik.http.routers.sigint-api.tls.certResolver=letsEncryptResolver"
 
     restart: unless-stopped
     networks:
